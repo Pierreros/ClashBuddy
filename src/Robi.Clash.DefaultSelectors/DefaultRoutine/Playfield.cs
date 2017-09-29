@@ -62,8 +62,8 @@ namespace Robi.Clash.DefaultSelectors
 
             int distanceAtt = att.Speed * this.time;
             int distanceTgt = tgt.Speed * this.time;
-            this.attPos = att.Position;
-            this.tgtPos = tgt.Position;
+            this.attPos = new VectorAI(att.Position);
+            this.tgtPos = new VectorAI(tgt.Position);
             if (this.time > 0)
             {
                 if (att.Speed > 0)
@@ -364,6 +364,7 @@ namespace Robi.Clash.DefaultSelectors
         public int pID = 0;
         public int timeShift = 0;
         public Cast bestCast = null;
+        public bool suddenDeath = false;
 
         //public Hrtprozis prozis = Hrtprozis.Instance;
         public int evaluatePenality = 0;
@@ -423,17 +424,63 @@ namespace Robi.Clash.DefaultSelectors
 
         public void initTowers()
         {
+            int i = 0;
+            int kingsLine = 0;
             ownTowers.Add(ownKingsTower);
-            if (ownPrincessTower1.HP > 0) ownTowers.Add(ownPrincessTower1);
-            if (ownPrincessTower2.HP > 0) ownTowers.Add(ownPrincessTower2);
-            if (ownPrincessTower1.HP > 0) ownPrincessTowers.Add(ownPrincessTower1);
-            if (ownPrincessTower2.HP > 0) ownPrincessTowers.Add(ownPrincessTower2);
-
+            if (ownPrincessTower1.HP > 0)
+            {
+                i += ownPrincessTower1.Line;
+                ownTowers.Add(ownPrincessTower1);
+                ownPrincessTowers.Add(ownPrincessTower1);
+            }
+            if (ownPrincessTower2.HP > 0)
+            {
+                i += ownPrincessTower2.Line;
+                ownTowers.Add(ownPrincessTower2);
+                ownPrincessTowers.Add(ownPrincessTower2);
+            }
+            switch (i)
+            {
+                case 0:
+                    kingsLine = 3;
+                    break;
+                case 1:
+                    kingsLine = 2;
+                    break;
+                case 2:
+                    kingsLine = 1;
+                    break;
+            }
+            ownKingsTower.Line = kingsLine;
+            
+            i = 0;
+            kingsLine = 0;
             enemyTowers.Add(enemyKingsTower);
-            if (enemyPrincessTower1.HP > 0) enemyTowers.Add(enemyPrincessTower1);
-            if (enemyPrincessTower2.HP > 0) enemyTowers.Add(enemyPrincessTower2);
-            if (enemyPrincessTower1.HP > 0) enemyPrincessTowers.Add(enemyPrincessTower1);
-            if (enemyPrincessTower2.HP > 0) enemyPrincessTowers.Add(enemyPrincessTower2);
+            if (enemyPrincessTower1.HP > 0)
+            {
+                i += enemyPrincessTower1.Line;
+                enemyTowers.Add(enemyPrincessTower1);
+                enemyPrincessTowers.Add(enemyPrincessTower1);
+            }
+            if (enemyPrincessTower2.HP > 0)
+            {
+                i += enemyPrincessTower2.Line;
+                enemyTowers.Add(enemyPrincessTower2);
+                enemyPrincessTowers.Add(enemyPrincessTower2);
+            }
+            switch (i)
+            {
+                case 0:
+                    kingsLine = 3;
+                    break;
+                case 1:
+                    kingsLine = 2;
+                    break;
+                case 2:
+                    kingsLine = 1;
+                    break;
+            }
+            enemyKingsTower.Line = kingsLine;
         }
 
         public Playfield(Playfield p, int timeShift = 0)
@@ -483,6 +530,8 @@ namespace Robi.Clash.DefaultSelectors
                 this.pIdHistory.Add(pID);
             }
             this.nextEntity = p.nextEntity;
+            this.suddenDeath = p.suddenDeath;
+
 
             this.evaluatePenality = p.evaluatePenality;
             this.ruleWeight = p.ruleWeight;
@@ -620,32 +669,32 @@ namespace Robi.Clash.DefaultSelectors
 
         }
 
-        public VectorAI getDeployPosition(deployDirection direction = deployDirection.none)
+        public VectorAI getDeployPosition(deployDirectionAbsolute absoluteDirection = deployDirectionAbsolute.none)
         {
             //Absolute directions
             int sign = this.home ? 1 : -1;
-            switch (direction)
+            switch (absoluteDirection)
             {
-                case deployDirection.behindKingsTowerCenter: return home ? new VectorAI(9500, 1100) : new VectorAI(9500, 30900); //TODO: test !home
-                case deployDirection.behindKingsTowerLine1: return home ? new VectorAI(8300, 1200) : new VectorAI(8700, 30950);
-                case deployDirection.behindKingsTowerLine2: return home ? new VectorAI(10400, 1250) : new VectorAI(10300, 31000);
-                case deployDirection.cornerLine1: return home ? new VectorAI(800, 2200) : new VectorAI(550, 30050);
-                case deployDirection.cornerLine2: return home ? new VectorAI(17000, 2500) : new VectorAI(17450, 30080);
-                case deployDirection.bridgeLine1: return home ? new VectorAI(3500, 14900) : new VectorAI(3500, 17200);
-                case deployDirection.bridgeLine2: return home ? new VectorAI(14100, 15100) : new VectorAI(14100, 17000);
-                case deployDirection.betweenBridges: return new VectorAI(9500, 16000); //TODO test
-                case deployDirection.borderBridgeLine1: return home ? new VectorAI(600, 14900) : new VectorAI(550, 17200); //TODO: test
-                case deployDirection.borderBridgeLine2: return home ? new VectorAI(17000, 16700) : new VectorAI(17100, 17000); //TODO: test
-                case deployDirection.ownPrincessTowerLine1: return home ? new VectorAI(3500, 6500) : new VectorAI(3500, 25500);
-                case deployDirection.ownPrincessTowerLine2: return home ? new VectorAI(14500, 6500) : new VectorAI(14500, 25500);
-                case deployDirection.enemyPrincessTowerLine1: return home ? new VectorAI(3500, 25500) : new VectorAI(3500, 6500);
-                case deployDirection.enemyPrincessTowerLine2: return home ? new VectorAI(14500, 25500) : new VectorAI(14500, 6500);
+                case deployDirectionAbsolute.behindKingsTowerCenter: return home ? new VectorAI(9500, 900) : new VectorAI(9500, 30900); //TODO: test !home
+                case deployDirectionAbsolute.behindKingsTowerLine1: return home ? new VectorAI(8300, 1000) : new VectorAI(8700, 30950);
+                case deployDirectionAbsolute.behindKingsTowerLine2: return home ? new VectorAI(10400, 1100) : new VectorAI(10300, 31000);
+                case deployDirectionAbsolute.cornerLine1: return home ? new VectorAI(800, 2200) : new VectorAI(500, 30000);
+                case deployDirectionAbsolute.cornerLine2: return home ? new VectorAI(17000, 2500) : new VectorAI(17500, 30100);
+                case deployDirectionAbsolute.bridgeLine1: return home ? new VectorAI(3500, 14900) : new VectorAI(3500, 17200);
+                case deployDirectionAbsolute.bridgeLine2: return home ? new VectorAI(14100, 15100) : new VectorAI(14100, 17000);
+                case deployDirectionAbsolute.betweenBridges: return new VectorAI(9500, 16000); //TODO test
+                case deployDirectionAbsolute.borderBridgeLine1: return home ? new VectorAI(600, 14900) : new VectorAI(550, 17200); //TODO: test
+                case deployDirectionAbsolute.borderBridgeLine2: return home ? new VectorAI(17000, 16700) : new VectorAI(17100, 17000); //TODO: test
+                case deployDirectionAbsolute.ownPrincessTowerLine1: return home ? new VectorAI(3500, 6500) : new VectorAI(3500, 25500);
+                case deployDirectionAbsolute.ownPrincessTowerLine2: return home ? new VectorAI(14500, 6500) : new VectorAI(14500, 25500);
+                case deployDirectionAbsolute.enemyPrincessTowerLine1: return home ? new VectorAI(3500, 25500) : new VectorAI(3500, 6500);
+                case deployDirectionAbsolute.enemyPrincessTowerLine2: return home ? new VectorAI(14500, 25500) : new VectorAI(14500, 6500);
             }
-            Logger.Information("!!![getDeployPosition]Error: Absolute directions unhandled: " + direction);
+            Logger.Debug("!!![getDeployPosition]Error: Absolute directions unhandled: " + absoluteDirection);
             return new VectorAI(0, 0);
         }
 
-        public VectorAI getDeployPosition(VectorAI targetPosition, deployDirection direction = deployDirection.none, int deployDistance = 0) //for deployDistance you can use hc.card.DamageRadius; we  use only for Absolute directions
+        public VectorAI getDeployPosition(VectorAI targetPosition, deployDirectionRelative relativeDirection = deployDirectionRelative.none, int deployDistance = 0) //for deployDistance you can use hc.card.DamageRadius; we  use only for Absolute directions
         {
             //Relative directions
             int sign = this.home ? 1 : -1;
@@ -653,43 +702,43 @@ namespace Robi.Clash.DefaultSelectors
 
             if (targetPosition == null)
             {
-                Logger.Information("!!![getDeployPosition]Error: Relative targetPosition == NULL");
+                Logger.Debug("!!![getDeployPosition]Error: Relative targetPosition == NULL");
                 return new VectorAI(0, 0);
             }
 
-            switch (direction)
+            switch (relativeDirection)
             {
-                case deployDirection.Up: return new VectorAI(targetPosition.X, targetPosition.Y + sign * (1000 + deployDistance));
-                case deployDirection.Down: return new VectorAI(targetPosition.X, targetPosition.Y - sign * (1000 + deployDistance));
+                case deployDirectionRelative.Up: return new VectorAI(targetPosition.X, targetPosition.Y + sign * (1000 + deployDistance));
+                case deployDirectionRelative.Down: return new VectorAI(targetPosition.X, targetPosition.Y - sign * (1000 + deployDistance));
 
-                case deployDirection.RightUp: return new VectorAI(targetPosition.X - sign * (1000 + 7071 / 10000 * deployDistance), targetPosition.Y + sign * (1000 + 7071 / 10000 * deployDistance));
-                case deployDirection.Right: return new VectorAI(targetPosition.X - sign * (1000 + deployDistance), targetPosition.Y);
-                case deployDirection.RightDown: return new VectorAI(targetPosition.X - sign * (1000 + 7071 / 10000 * deployDistance), targetPosition.Y - sign * (1000 + 7071 / 10000 * deployDistance));
-                case deployDirection.LeftDown: return new VectorAI(targetPosition.X + sign * (1000 + 7071 / 10000 * deployDistance), targetPosition.Y - sign * (1000 + 7071 / 10000 * deployDistance));
-                case deployDirection.Left: return new VectorAI(targetPosition.X + sign * (1000 + deployDistance), targetPosition.Y);
-                case deployDirection.LeftUp: return new VectorAI(targetPosition.X + sign * (1000 + 7071 / 10000 * deployDistance), targetPosition.Y + sign * (1000 + 7071 / 10000 * deployDistance));
+                case deployDirectionRelative.RightUp: return new VectorAI(targetPosition.X - sign * (1000 + deployDistance * 7071 / 10000), targetPosition.Y + sign * (1000 + deployDistance * 7071 / 10000));
+                case deployDirectionRelative.Right: return new VectorAI(targetPosition.X - sign * (1000 + deployDistance), targetPosition.Y);
+                case deployDirectionRelative.RightDown: return new VectorAI(targetPosition.X - sign * (1000 + deployDistance * 7071 / 10000), targetPosition.Y - sign * (1000 + deployDistance * 7071 / 10000));
+                case deployDirectionRelative.LeftDown: return new VectorAI(targetPosition.X + sign * (1000 + deployDistance * 7071 / 10000), targetPosition.Y - sign * (1000 + deployDistance * 7071 / 10000));
+                case deployDirectionRelative.Left: return new VectorAI(targetPosition.X + sign * (1000 + deployDistance), targetPosition.Y);
+                case deployDirectionRelative.LeftUp: return new VectorAI(targetPosition.X + sign * (1000 + deployDistance * 7071 / 10000), targetPosition.Y + sign * (1000 + deployDistance * 7071 / 10000));
 
-                case deployDirection.borderSideUp: return new VectorAI(targetPosition.X + lineSign * (1000 + 7071 / 10000 * deployDistance), targetPosition.Y + sign * (1000 + 7071 / 10000 * deployDistance));
-                case deployDirection.borderSideMiddle: return new VectorAI(targetPosition.X + lineSign * (1000 + deployDistance), targetPosition.Y);
-                case deployDirection.borderSideDown: return new VectorAI(targetPosition.X + lineSign * (1000 + 7071 / 10000 * deployDistance), targetPosition.Y - sign * (1000 + 7071 / 10000 * deployDistance));
-                case deployDirection.centerSideUp: return new VectorAI(targetPosition.X - lineSign * (1000 + 7071 / 10000 * deployDistance), targetPosition.Y + sign * (1000 + 7071 / 10000 * deployDistance));
-                case deployDirection.centerSideMiddle: return new VectorAI(targetPosition.X - lineSign * (1000 + deployDistance), targetPosition.Y);
-                case deployDirection.centerSideDown: return new VectorAI(targetPosition.X - lineSign * (1000 + 7071 / 10000 * deployDistance), targetPosition.Y - sign * (1000 + 7071 / 10000 * deployDistance));
+                case deployDirectionRelative.borderSideUp: return new VectorAI(targetPosition.X + lineSign * (1000 + deployDistance * 7071 / 10000), targetPosition.Y + sign * (1000 + deployDistance * 7071 / 10000));
+                case deployDirectionRelative.borderSideMiddle: return new VectorAI(targetPosition.X + lineSign * (1000 + deployDistance), targetPosition.Y);
+                case deployDirectionRelative.borderSideDown: return new VectorAI(targetPosition.X + lineSign * (1000 + deployDistance * 7071 / 10000), targetPosition.Y - sign * (1000 + deployDistance * 7071 / 10000));
+                case deployDirectionRelative.centerSideUp: return new VectorAI(targetPosition.X - lineSign * (1000 + deployDistance * 7071 / 10000), targetPosition.Y + sign * (1000 + deployDistance * 7071 / 10000));
+                case deployDirectionRelative.centerSideMiddle: return new VectorAI(targetPosition.X - lineSign * (1000 + deployDistance), targetPosition.Y);
+                case deployDirectionRelative.centerSideDown: return new VectorAI(targetPosition.X - lineSign * (1000 + deployDistance * 7071 / 10000), targetPosition.Y - sign * (1000 + deployDistance * 7071 / 10000));
 
-                case deployDirection.lineCorner: return (lineSign > 0) ? (home ? new VectorAI(17000, 2500) : new VectorAI(17450, 30080)) : (home ? new VectorAI(800, 2200) : new VectorAI(550, 30050));
+                case deployDirectionRelative.lineCorner: return (lineSign > 0) ? (home ? new VectorAI(17000, 2500) : new VectorAI(17450, 30080)) : (home ? new VectorAI(800, 2200) : new VectorAI(550, 30050));
                 default:
                     return new VectorAI(targetPosition);
             }
         }
 
-        public VectorAI getDeployPosition(BoardObj bo, deployDirection direction = deployDirection.none, int deployDistance = 0) //for deployDistance you can use hc.card.DamageRadius
+        public VectorAI getDeployPosition(BoardObj bo, deployDirectionRelative relativeDirection = deployDirectionRelative.none, int deployDistance = 0) //for deployDistance you can use hc.card.DamageRadius
         {
             if (bo == null)
             {
-                Logger.Information("!!![getDeployPosition]Error:BoardObj == NULL");
+                Logger.Debug("!!![getDeployPosition]Error:BoardObj == NULL");
                 return new VectorAI(0, 0);
             }
-            else return getDeployPosition(bo.Position, direction, deployDistance);
+            else return getDeployPosition(bo.Position, relativeDirection, deployDistance);
         }
 
         public int getDistanceToPointFromBorder(VectorAI Position) //TODO: get actual size fom game for Battlefield + bool CanDeploy
@@ -786,6 +835,83 @@ namespace Robi.Clash.DefaultSelectors
             return retval;
         }
 
+        /*
+        private Handcard getFinisher(BoardObj bo, bool canWait) //useful for Towers
+        {
+            Handcard retval = null;
+            Handcard hc;
+
+            Handcard projectile = null;
+            Handcard aoe = null;
+            Handcard mob = null;
+            int count = this.ownHandCards.Count;
+            for (int i = 1; i < count; i++)
+            {
+                hc = ownHandCards[i];
+                switch (hc.card.type)
+                {
+                    case boardObjType.PROJECTILE:
+                        if (bo.HP <= hc.card.Atk)
+                        {
+                            if (projectile == null || hc.card.Atk > projectile.card.Atk) projectile = hc;
+                        }
+                        continue;
+                    case boardObjType.AOE:
+                        int towerDmg = hc.card.towerDamage;
+                        if (hc.card.name == CardDB.cardName.poison) towerDmg *= 8;
+                        if (bo.HP <= towerDmg)
+                        {
+                            if (aoe == null || towerDmg > aoe.extraVal)
+                            {
+                                aoe = hc;
+                                aoe.extraVal = towerDmg;
+                            }
+                        }
+                        continue;
+                    case boardObjType.MOB:
+                        if (bo.type == boardObjType.BUILDING)
+                        {
+                            if (KnowledgeBase.Instance.)
+                            //TODO: calc online
+                            if (hc.card.TargetType == targetType.BUILDINGS)
+                            {
+                                int val;
+                                if (bo.HP <= hc.card.Atk)
+                                {
+
+                                }
+                                else
+                                {
+                                    int dmg = hc.card.Atk * hc.card.SummonNumber;
+                                    int restHp = bo.HP - dmg;
+                                    double timeForDestroy = restHp / (dmg * 1000 / hc.card.HitSpeed);
+                                    double timeToDestruction = hc.card.MaxHP / (bo.Atk * 1000 / bo.card.HitSpeed);
+                                    double delta = timeToDestruction - timeForDestroy;
+                                    if (hc.card.SummonNumber > 1)
+                                    {
+                                        double hitPerMob = Math.Ceiling((double)hc.card.MaxHP / bo.Atk);
+                                        timeToDestruction = hc.card.SummonNumber * hitPerMob * 1000 / bo.card.HitSpeed;
+
+                                    }
+                                    if (delta > 0)
+                                    {
+                                        if (mob == null || hc.card.Atk > mob.card.Atk)
+                                        {
+                                            mob = hc;
+                                            mob.extraVal = delta;
+                                        }
+                                    }
+                                }
+                            }
+
+
+                        }
+                }
+                if (ownHandCards[i].card.MaxHP > retval.card.MaxHP) retval = ownHandCards[i];
+            }
+            return retval;
+        }*/
+
         private Handcard getMobCardByCondition(List<Handcard> list, bool needDamager) //!needDamager mean needTank
         {
             Handcard retval = null;
@@ -838,11 +964,11 @@ namespace Robi.Clash.DefaultSelectors
         {
             if (hc.card.Transport == transportType.GROUND)
             {
-                return getDeployPosition(line == 1 ? deployDirection.behindKingsTowerLine1 : deployDirection.behindKingsTowerLine2);
+                return getDeployPosition(line == 1 ? deployDirectionAbsolute.behindKingsTowerLine1 : deployDirectionAbsolute.behindKingsTowerLine2);
             }
             else
             {
-                return getDeployPosition(line == 1 ? deployDirection.cornerLine1 : deployDirection.cornerLine2);
+                return getDeployPosition(line == 1 ? deployDirectionAbsolute.cornerLine1 : deployDirectionAbsolute.cornerLine2);
             }
         }
 
@@ -883,17 +1009,17 @@ namespace Robi.Clash.DefaultSelectors
         private void LogBoardObject(BoardObj bo)
         {
             string extrainfo = (bo.frozen ? " frozen:" + bo.startFrozen : "") + (bo.LifeTime > 0 ? " LifeTime:" + bo.LifeTime : "") + (bo.extraData != "" ? " " + bo.extraData : "");
-            Logger.Information("{type} {ownerIndex} {Name} {GId} {Position:l} {level} {Atk} {HP} {Shield}{extrainfo:l}", bo.type, bo.ownerIndex, bo.Name, bo.GId, bo.Position, bo.level, bo.Atk, bo.HP, bo.Shield, extrainfo);
+            Logger.Debug("{type} {ownerIndex} {Name} {GId} {Position:l} {level} {Atk} {HP} {Shield}{extrainfo:l}", bo.type, bo.ownerIndex, bo.Name, bo.GId, bo.Position, bo.level, bo.Atk, bo.HP, bo.Shield, extrainfo);
         }
 
         private void LogHandCard(Handcard hc)
         {
-            Logger.Information("Hand {position} {name} {lvl} {manacost}", hc.position, hc.card.name, hc.lvl, hc.manacost);
+            Logger.Debug("Hand {position} {name} {lvl} {manacost}", hc.position, hc.card.name, hc.lvl, hc.manacost);
         }
 
         public void print()
         {
-            Logger.Information("Data bt:{BattleTime} owner:{ownerIndex} mana:{ownMana} nxtc:{name:l}:{lvl}", BattleTime, ownerIndex, ownMana, nextCard.name, nextCard.lvl);
+            Logger.Debug("Data bt:{BattleTime} owner:{ownerIndex} mana:{ownMana} nxtc:{name:l}:{lvl}", BattleTime, ownerIndex, ownMana, nextCard.name, nextCard.lvl);
 
             //help.logg("ownCards");
             foreach (Handcard hc in ownHandCards) LogHandCard(hc);

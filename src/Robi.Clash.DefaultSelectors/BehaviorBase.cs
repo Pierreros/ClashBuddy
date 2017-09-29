@@ -34,7 +34,7 @@ namespace Robi.Clash.DefaultSelectors
         {
             base.BattleStart();
             var battleLogName = Path.Combine(LogProvider.LogPath, "BattleLog", $"battle-{DateTime.Now:yyyyMMddHHmmss}.log");
-            Logger.Information($"BattleLog: {battleLogName}");
+            Logger.Debug($"BattleLog: {battleLogName}");
             _battleLogger = new LoggerConfiguration()
                 .Filter.ByExcluding(e =>
                 {
@@ -66,7 +66,6 @@ namespace Robi.Clash.DefaultSelectors
         public override void Deinitialize()
         {
             SettingsManager.UnregisterSettings("Base Behavior");
-            CardDB.Instance.uploadCardInfo();
         }
 
         public sealed override CastRequest GetNextCast()
@@ -135,7 +134,6 @@ namespace Robi.Clash.DefaultSelectors
                         bo.own = own;
                         if (own) ownAreaEffects.Add(bo);
                         else enemyAreaEffects.Add(bo);
-                        //hc.position = ??? TODO
 
                         //if (hc.card.name == CardDB.cardName.unknown) hc.card = CardDB.Instance.collectNewCards(spell); //TODO: same for all objects
 
@@ -172,8 +170,8 @@ namespace Robi.Clash.DefaultSelectors
 
                         bo.ownerIndex = (int)@char.OwnerIndex;
                         bool own = bo.ownerIndex == lp.OwnerIndex ? true : false; //TODO: replace it on Friendly (for 2x2 mode)
-
                         bo.own = own;
+                        
                         int tower = 0;
                         switch (bo.Name)
                         {
@@ -238,9 +236,12 @@ namespace Robi.Clash.DefaultSelectors
 
             using (new PerformanceTimer("Initialize playfield."))
             {
+                Logger.Debug("");
+                Logger.Debug("################################Routine v.0.7.1 Behavior:");
                 p = new Playfield
                 {
                     BattleTime = ClashEngine.Instance.Battle.BattleTime,
+                    suddenDeath = ClashEngine.Instance.Battle.BattleTime.TotalSeconds > 180,
                     ownerIndex = (int)lp.OwnerIndex,
                     ownMana = (int)lp.Mana,
                     ownHandCards = ownHandCards,
@@ -262,33 +263,16 @@ namespace Robi.Clash.DefaultSelectors
 
                 p.home = p.ownKingsTower.Position.Y < 15250 ? true : false;
 
-                if (p.ownPrincessTower1.Position == null) p.ownPrincessTower1.Position = p.getDeployPosition(deployDirection.ownPrincessTowerLine1);
-                if (p.ownPrincessTower2.Position == null) p.ownPrincessTower2.Position = p.getDeployPosition(deployDirection.ownPrincessTowerLine2);
-                if (p.enemyPrincessTower1.Position == null) p.enemyPrincessTower1.Position = p.getDeployPosition(deployDirection.enemyPrincessTowerLine1);
-                if (p.enemyPrincessTower2.Position == null) p.enemyPrincessTower2.Position = p.getDeployPosition(deployDirection.enemyPrincessTowerLine2);
+                if (p.ownPrincessTower1.Position == null) p.ownPrincessTower1.Position = p.getDeployPosition(deployDirectionAbsolute.ownPrincessTowerLine1);
+                if (p.ownPrincessTower2.Position == null) p.ownPrincessTower2.Position = p.getDeployPosition(deployDirectionAbsolute.ownPrincessTowerLine2);
+                if (p.enemyPrincessTower1.Position == null) p.enemyPrincessTower1.Position = p.getDeployPosition(deployDirectionAbsolute.enemyPrincessTowerLine1);
+                if (p.enemyPrincessTower2.Position == null) p.enemyPrincessTower2.Position = p.getDeployPosition(deployDirectionAbsolute.enemyPrincessTowerLine2);
 
-                p.initTowers();
-
-                int i = 0;
-                foreach (BoardObj t in p.ownTowers) if (t.Tower < 10) i += t.Line;
-                int kingsLine = 0;
-                switch (i)
-                {
-                    case 0:
-                        kingsLine = 3;
-                        break;
-                    case 1:
-                        kingsLine = 2;
-                        break;
-                    case 2:
-                        kingsLine = 1;
-                        break;
-                }
-                foreach (BoardObj t in p.ownTowers) if (t.Tower > 9) t.Line = kingsLine;
+                p.initTowers();                
 
                 p.print();
             }
-
+            
             Cast bc;
             using (new PerformanceTimer("GetBestCast"))
             {
@@ -297,10 +281,10 @@ namespace Robi.Clash.DefaultSelectors
                 CastRequest retval = null;
                 if (bc != null && bc.Position != null)
                 {
-                    Logger.Information("Cast {bc}", bc.ToString());
+                    Logger.Debug("Cast {bc}", bc.ToString());
                     retval = new CastRequest(bc.SpellName, bc.Position.ToVector2());
                 }
-                else Logger.Information("Waiting for cast, maybe next tick...");
+                else Logger.Debug("Waiting for cast, maybe next tick...");
 
                 return retval;
             }
