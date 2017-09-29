@@ -27,38 +27,6 @@ namespace Robi.Clash.DefaultSelectors
         private int x = 0;
         private int y = 0;
 
-        public VectorAI(int X, int Y)
-        {
-            x = X;
-            y = Y;
-        }
-        
-        public VectorAI(Engine.NativeObjects.Native.Vector2 pos)
-        {
-            x = pos.X;
-            y = pos.Y;
-        }
-
-        public Engine.NativeObjects.Native.Vector2 ToVector2()
-        {
-            return new Engine.NativeObjects.Native.Vector2(x, y);
-        }
-
-        public VectorAI(int X, int Y, int random)
-        {
-            Random rnd = new Random();
-            x = X + (random / 2 - rnd.Next(random));
-            y = Y + (random / 2 - rnd.Next(random));
-        }
-
-        public VectorAI(string s) //{3500/25500}
-        {
-            s = s.Substring(1, s.Length - 2);
-            string[] ss = s.Split('/');
-            x = Convert.ToInt32(ss[0]);
-            y = Convert.ToInt32(ss[1]);
-        }
-
         public int X
         {
             get { return x; }
@@ -70,9 +38,41 @@ namespace Robi.Clash.DefaultSelectors
             set { y = value; }
         }
 
-        public int getDistance(VectorAI v2)
+        public VectorAI(int X, int Y)
         {
-            return (int)Math.Sqrt((v2.x - x) * (v2.x - x) + (v2.y - y) * (v2.y - y));
+            x = X;
+            y = Y;
+        }
+
+        public VectorAI(VectorAI copy)
+        {
+            x = copy.X;
+            y = copy.Y;
+        }
+
+        public VectorAI(Engine.NativeObjects.Native.Vector2 pos)
+        {
+            x = pos.X;
+            y = pos.Y;
+        }
+
+        public VectorAI(string s) //{3500/25500}
+        {
+            s = s.Substring(1, s.Length - 2);
+            string[] ss = s.Split('/');
+            x = Convert.ToInt32(ss[0]);
+            y = Convert.ToInt32(ss[1]);
+        }
+
+        public Engine.NativeObjects.Native.Vector2 ToVector2()
+        {
+            return new Engine.NativeObjects.Native.Vector2(x, y);
+        }
+
+        //If ever will be is available real direction, speed, acceleration, then maybe all this can be changed to a Vector form
+        public int getDistanceToTarget(VectorAI targetPosition)
+        {
+            return (int)Math.Sqrt((targetPosition.x - x) * (targetPosition.x - x) + (targetPosition.y - y) * (targetPosition.y - y));
         }
 
         public override string ToString()
