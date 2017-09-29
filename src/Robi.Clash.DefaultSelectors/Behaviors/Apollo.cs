@@ -923,5 +923,52 @@
         {
             return 0;
         }
+
+
+
+        // Dont deploy to many chars at one area
+        // Check if somewhere is a bomb
+        // Don´t play just a tank if no enough mana for support
+        // 
+
+        private static bool SupportDeployment(Playfield p, int line)
+        {
+            // If own characters already attacking and you are deploying as support
+            // The chars should be deployed behind the own chars
+            IEnumerable<BoardObj> attackingChars = p.ownMinions.Where(n => n.Line == line && IsOwnAtEnemySide(p, n));
+
+            // Maybe check also which card type: Tank deployed in front, Ranger behinde ...
+
+            if (attackingChars.Count() > 0)
+                return true;
+            else
+                return false;
+        }
+
+        private static bool IsOwnAtEnemySide(Playfield p, BoardObj bo)
+        {
+            if(p.home)
+            {
+                if (bo.Position.Y >= MiddleLineY(p))
+                    return true;
+                else
+                    return false;
+            }
+            else
+            {
+                if (bo.Position.Y <= MiddleLineY(p))
+                    return true;
+                else
+                    return false;
+            }
+        }
+
+        public static int MiddleLineY(Playfield p)
+        {
+            return (p.ownKingsTower.Position.Y +
+                    p.enemyKingsTower.Position.Y) / 2;
+
+        }
+
     }
 }
