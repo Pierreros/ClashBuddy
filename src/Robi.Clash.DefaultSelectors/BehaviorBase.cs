@@ -237,7 +237,7 @@ namespace Robi.Clash.DefaultSelectors
             using (new PerformanceTimer("Initialize playfield."))
             {
                 Logger.Debug("");
-                Logger.Debug("################################Routine v.0.7.1 Behavior:");
+                Logger.Debug("################################Routine {Version} Behavior: {Name} Author: {Author}", Version, Name, Author);
                 p = new Playfield
                 {
                     BattleTime = ClashEngine.Instance.Battle.BattleTime,
