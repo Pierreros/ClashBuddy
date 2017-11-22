@@ -2,6 +2,7 @@
 {
     using Common;
     using Robi.Clash.DefaultSelectors.Apollo;
+    using Robi.Clash.DefaultSelectors.Apollo.HotFixes;
     using Robi.Engine.Settings;
     using Serilog;
     using Settings;
@@ -21,7 +22,7 @@
 
         public override string Author => "Peros_";
 
-        public override Version Version => new Version(1, 7, 0, 0);
+        public override Version Version => new Version(1, 8, 0, 0);
         public override Guid Identifier => new Guid("{669f976f-23ce-4b97-9105-a21595a394bf}");
 
         private static ApolloSettings Settings => SettingsManager.GetSetting<ApolloSettings>("Apollo");
@@ -50,9 +51,15 @@
             Logger.Debug("Home = {Home}", p.home);
 
             #region Apollo Magic
-            PlayfieldAnalyse.AnalyseLines(p);
-            currentSituation = GetCurrentFightState(p);
-            Handcard hc = CardChoosing.GetOppositeCard(p, currentSituation) ?? CardChoosing.GetMobInPeace(p, currentSituation);
+            // Highest priority -> Can we kill the enemy with a spell
+            BoardObj finisherTower = Decision.IsEnemyKillWithSpellPossible(p, out Handcard hc);
+            if (finisherTower != null && (hc?.manacost > p.ownMana)) return new Cast(hc.name, finisherTower.Position, hc);
+            // ------------------------------------------------------
+
+            PlayfieldAnalyse.AnalyseLines(p);               // Danger- and Chancelevel
+            currentSituation = GetCurrentFightState(p);     // Attack, Defense or UnderAttack (and where it is)
+            hc = CardChoosing.GetOppositeCard(p, currentSituation) ?? CardChoosing.GetMobInPeace(p, currentSituation);
+            //hc = CardChoosing.GetMobInPeace(p, currentSituation);
 
             if (hc == null)
             {
@@ -63,7 +70,7 @@
                 {
                     hc = hcApollo;
 
-                    if (choosedPosition != null)
+                    if (choosedPosition != null && !(hc?.manacost > p.ownMana))
                         return new Cast(hcApollo.name, choosedPosition, hcApollo);
                 }
 
@@ -73,12 +80,16 @@
                 return null;
 
             Logger.Debug("Part: GetSpellPosition");
-            VectorAI nextPosition = PositionChoosing.GetNextSpellPosition(currentSituation, hc, p);
+
+            VectorAI nextPosition = SpecialPositionHandling.GetPosition(p, hc);
+            if(nextPosition == null)
+                nextPosition = PositionChoosing.GetNextSpellPosition(currentSituation, hc, p);
+
             bc = new Cast(hc.name, nextPosition, hc);
             #endregion
-
             Logger.Debug("BestCast:" + bc.SpellName + " " + bc.Position.ToString());
 
+            if (bc?.hc?.manacost > p.ownMana) return null;
             return bc;
         }
 
