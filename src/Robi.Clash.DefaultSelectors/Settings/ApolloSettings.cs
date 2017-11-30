@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
-using System.Text;
+using Robi.Clash.DefaultSelectors.Apollo;
 using Robi.Common;
-using Robi.Engine.Settings.Attributes;
 
 namespace Robi.Clash.DefaultSelectors.Settings
 {
@@ -12,14 +9,13 @@ namespace Robi.Clash.DefaultSelectors.Settings
     {
         internal ApolloSettings() : base(SettingsPath, "Settings", "Apollo.json")
         {
-
         }
 
         [Category("Default")]
-        [DefaultValue((int)Player.FightStyle.Balanced)]
+        [DefaultValue((int) FightStyle.Balanced)]
         [DisplayName("Fight Style")]
         [Description("Choose Apollos fight style. Smart balanced, concentrated on the Defense or as an angry rusher?")]
-        public Apollo.FightStyle FightStyle { get; set; }
+        public FightStyle FightStyle { get; set; }
 
         [Category("Default")]
         [DisplayName("Enemys KingTower spell damaging mode")]

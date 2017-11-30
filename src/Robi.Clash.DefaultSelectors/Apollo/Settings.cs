@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Robi.Clash.DefaultSelectors.Apollo
+﻿namespace Robi.Clash.DefaultSelectors.Apollo
 {
-    static class Setting
+    internal static class Setting
     {
         public static FightStyle FightStyle { get; set; }
 
